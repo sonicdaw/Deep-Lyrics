@@ -2,6 +2,7 @@ __author__ = 'Tony Beltramelli www.tonybeltramelli.com - 19/08/2016'
 
 import numpy as np
 import codecs
+import MeCab
 
 class Vocabulary:
     vocabulary = {}
@@ -9,11 +10,16 @@ class Vocabulary:
     char_lookup = {}
     size = 0
     separator = '->'
+    use_mecab = True
 
     def generate(self, input_file_path):
         input_file = codecs.open(input_file_path, 'r', 'utf_8')
+        mecab = MeCab.Tagger("-Owakati")
         index = 0
         for line in input_file:
+            if self.use_mecab:
+                text = mecab.parse(line.encode('utf_8'))
+                line = text.split(' ')
             for char in line:
                 if char not in self.vocabulary:
                     self.vocabulary[char] = index
@@ -59,5 +65,7 @@ class Vocabulary:
         np.set_printoptions(threshold='nan')
         for key, value in self.binary_vocabulary.iteritems():
             array_as_string = np.array2string(value, separator=',', max_line_width=self.size * self.size)
-            string += "{}{}{}\n".format(key.encode('utf-8'), self.separator, array_as_string[1:len(array_as_string) - 1])
+            if not self.use_mecab:
+                key = key.encode('utf-8')
+            string += "{}{}{}\n".format(key, self.separator, array_as_string[1:len(array_as_string) - 1])
         return string
