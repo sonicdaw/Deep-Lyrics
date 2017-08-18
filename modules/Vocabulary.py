@@ -25,6 +25,10 @@ class Vocabulary:
                     self.vocabulary[char] = index
                     self.char_lookup[index] = char
                     index += 1
+            if " " not in self.vocabulary:
+                self.vocabulary[" "] = index
+                self.char_lookup[index] = " "
+                index += 1
         input_file.close()
         self.set_vocabulary_size()
         self.create_binary_representation()
