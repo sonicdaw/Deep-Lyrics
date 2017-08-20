@@ -3,6 +3,7 @@ __author__ = 'Tony Beltramelli www.tonybeltramelli.com - 19/08/2016'
 
 import argparse
 import codecs
+import MeCab
 from modules.Model import *
 from modules.Vocabulary import *
 from collections import deque
@@ -24,6 +25,7 @@ def main():
     seed = args.seed.decode('utf-8')
     sample_length = args.sample_length
     log_frequency = args.log_frequency
+    use_mecab = True
 
     model = Model(model_name)
     model.restore()
@@ -33,6 +35,13 @@ def main():
     vocabulary.retrieve(vocabulary_file)
 
     sample_file = codecs.open(output_file, 'w', 'utf_8')
+
+    if use_mecab:
+        mecab = MeCab.Tagger("-Owakati")
+        words = mecab.parse(seed.encode('utf_8'))
+        seed = []
+        for word in words.split(' '):
+            seed.append(word.decode('utf-8'))
 
     stack = deque([])
     for i in range(0, model.sequence_length - len(seed)):
