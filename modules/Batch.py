@@ -46,7 +46,10 @@ class Batch:
         if len(current_batch) < string_len:
             while len(current_batch) < string_len:
                 current_batch += u' '
-            self.data_file.seek(0)
+            if not self.use_mecab:
+                self.data_file.seek(0)
+            else:
+                self.data_word_index = 0
             self.dataset_full_passes += 1
             print "Pass {} done".format(self.dataset_full_passes)
 
@@ -58,12 +61,24 @@ class Batch:
             for char in sequence:
                 if self.use_mecab:
                     char = char.decode('utf-8')
-                sequences_vector.append(self.vocabulary.binary_vocabulary[char])
+                if char not in self.vocabulary.binary_vocabulary:
+#                    print char, "is not in vocab"
+                    binary = np.zeros(self.vocabulary.size)
+                    binary[0] = 1
+                    sequences_vector.append(binary)
+                else:
+                    sequences_vector.append(self.vocabulary.binary_vocabulary[char])
             batch_vector.append(sequences_vector)
             if not self.use_mecab:
                 label_vector.append(self.vocabulary.binary_vocabulary[label])
             else:
-                label_vector.append(self.vocabulary.binary_vocabulary[label[0].decode('utf-8')])
+                if label[0].decode('utf-8') not in self.vocabulary.binary_vocabulary:
+#                    print "label", label[0], "is not in vocab"
+                    binary = np.zeros(self.vocabulary.size)
+                    binary[0] = 1
+                    label_vector.append(binary)
+                else:
+                    label_vector.append(self.vocabulary.binary_vocabulary[label[0].decode('utf-8')])
 
         return np.asarray(batch_vector), np.asarray(label_vector)
 

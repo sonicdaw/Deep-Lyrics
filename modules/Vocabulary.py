@@ -3,9 +3,10 @@ __author__ = 'Tony Beltramelli www.tonybeltramelli.com - 19/08/2016'
 import numpy as np
 import codecs
 import MeCab
+from collections import OrderedDict
 
 class Vocabulary:
-    vocabulary = {}
+    vocabulary = OrderedDict()
     binary_vocabulary = {}
     char_lookup = {}
     size = 0
@@ -36,17 +37,30 @@ class Vocabulary:
     def retrieve(self, input_file_path):
         input_file = codecs.open(input_file_path, 'r', 'utf_8')
         buffer = ""
+        index = 0
+        vocab_count = {}
+        for line in input_file:
+            if not line in vocab_count:
+                vocab_count[line] = 0
+        self.size = len(vocab_count)
+        input_file.seek(0)
+
         for line in input_file:
             try:
-                separator_position = len(buffer) + line.index(self.separator)
-                buffer += line
-                key = buffer[:separator_position]
-                value = buffer[separator_position + len(self.separator):]
-                value = np.fromstring(value, sep=',')
+#                separator_position = len(buffer) + line.index(self.separator)
+#                buffer += line
+#                key = buffer[:separator_position]
+                key = line.replace('\n','').replace('\r','')
+#                value = buffer[separator_position + len(self.separator):]
+#                value = np.fromstring(value, sep=',')
 
-                self.binary_vocabulary[key] = value
-                self.vocabulary[key] = np.where(value == 1)[0][0]
-                self.char_lookup[np.where(value == 1)[0][0]] = key
+                if key not in self.binary_vocabulary:
+                    value = np.zeros(self.size)
+                    value[index] = 1
+                    index+=1
+                    self.binary_vocabulary[key] = value
+                    self.vocabulary[key] = np.where(value == 1)[0][0]
+                    self.char_lookup[np.where(value == 1)[0][0]] = key
 
                 buffer = ""
             except ValueError:
@@ -67,9 +81,10 @@ class Vocabulary:
     def get_serialized_binary_representation(self):
         string = ""
         np.set_printoptions(threshold='nan')
-        for key, value in self.binary_vocabulary.iteritems():
-            array_as_string = np.array2string(value, separator=',', max_line_width=self.size * self.size)
+        for key, value_v in self.vocabulary.iteritems():
+#            array_as_string = np.array2string(value, separator=',', max_line_width=self.size * self.size)
             if not self.use_mecab:
                 key = key.encode('utf-8')
-            string += "{}{}{}\n".format(key, self.separator, array_as_string[1:len(array_as_string) - 1])
+#            string += "{}{}{}\n".format(key, self.separator, array_as_string[1:len(array_as_string) - 1])
+            string += "{}\n".format(key)
         return string
